@@ -1,47 +1,65 @@
 const express = require('express');
 const morgan = require('morgan');
 const { loadRounds, saveRound } = require('./db');
-const axios = require('axios');
+const { roundTypes, assetTypes } = require('./constants')
 const { ethers } = require("ethers");
 const log4js = require("log4js");
 const logger = log4js.getLogger();
 const httpLogger = log4js.getLogger('http');
-
-const OPENRANK_HOST = `https://graph.cast.k3l.io`;
-
+const { getUsersInChannel } = require('./openrankClient')
 const app = express();
+const { createRoundV1 } = require('./roundV1Service')
+const { isZeroAddress } = require('./utils')
 
 app.use(express.json());
 app.use(morgan('dev'));
 
 app.use(log4js.connectLogger(httpLogger, {
     level: 'info',
-    format: ':method :url :status :response-time ms', 
+    format: ':method :url :status :response-time ms',
 }));
 
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+// this is go-through request
+// todo
+// return response and create a round async
+
 app.post('/rounds', async (req, res) => {
-    const { amount, address, channel, roundInterval } = req.body;
+    const { amount, tokenAddress, channel, roundInterval } = req.body;
 
     if (!amount || !address || !channel || !roundInterval) {
         return res.status(400).json({ error: 'All fields are required' });
     }
-    const url = `${OPENRANK_HOST}/channels/rankings/${channel}`
-    const response = await axios.get(url);
-    
-    if (response.data.result.length === 0) {
+
+    const usersInChannel = await getUsersInChannel(channel)
+
+    if (usersInChannel.length === 0) {
         res.status(400).json({ error: `Channel ${channel} is not tracked at https://graph.cast.k3l.io/channels/rankings/${channel}` });
         return
     }
 
+    // todo check if sender is in the channel?
+    
+    let assetType
+    if (isZeroAddress(tokenAddress)) {
+        assetType = assetTypes.eth
+    } else {
+        assetType = assetTypes.erc20
+    }
+
+
     if (!ethers.isAddress(address)) {
         res.status(400).json({ error: `${address} must be a valid ethereum 0x address` });
-        return 
-    } 
+        return
+    }
 
+    // const roundAddress = createRoundV1()
+    const type = roundTypes.v1
     const createdAt = Date.now().toString()
 
     try {
-        await saveRound({ amount, address, channel, roundInterval, createdAt });
+        await saveRound({ type, amount, address, channel, roundInterval, createdAt });
 
         // todo address
         res.status(201).json({ message: 'Round created successfully' });

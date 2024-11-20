@@ -18,7 +18,7 @@ const ROUND_FACTORY_ABI = [
     "function deploySingleRoundV1(tuple(uint40 roundId, address initialAdmin, bool isFeeEnabled, bool isLeafVerificationEnabled, uint256 awardAmount, tuple(uint8 assetType, address token, uint256 identifier) award)) external returns (address)"
 ];
 
-const createRound = async () => {
+const createRoundV1 = async () => {
     try {
         const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
         logger.info("Initialized JSON RPC Provider.");
@@ -61,5 +61,5 @@ const createRound = async () => {
 
 
 module.exports = {
-    createRound
+    createRoundV1
 }

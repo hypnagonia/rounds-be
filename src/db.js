@@ -3,11 +3,11 @@ const csv = require('csv-parser');
 const path = require('path');
 
 const dbPath = path.join(__dirname, '..', 'db', 'rounds.csv');
-const CSV_HEADER = 'amount,address,channel,createdAt,roundInterval\n'
+const CSV_HEADER = 'type,amount,address,channel,createdAt,roundInterval,lastUpdated\n'
 
-fs.ensureFileSync(dbPath); 
+fs.ensureFileSync(dbPath);
 if (fs.readFileSync(dbPath, 'utf8').trim() === '') {
-    fs.writeFileSync(dbPath, CSV_HEADER); 
+    fs.writeFileSync(dbPath, CSV_HEADER);
 }
 
 const loadRounds = async () => {
@@ -22,8 +22,10 @@ const loadRounds = async () => {
 };
 
 const saveRound = async (round) => {
-    const { amount, address, channel, roundInterval, createdAt } = round;
-    const newRound = `${amount},${address},${channel},${createdAt},${roundInterval}\n`;
+    const { type, amount, address, channel, roundInterval, createdAt } = round;
+    const lastUpdated = 0
+
+    const newRound = `${type},${amount},${address},${channel},${createdAt},${roundInterval},${lastUpdated}\n`;
     await fs.appendFile(dbPath, newRound);
 };
 

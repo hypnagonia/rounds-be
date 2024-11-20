@@ -1,3 +1,14 @@
+### Round contract sources
+https://github.com/hypnagonia/rounds-contracts
+
+### 
+```bash
+cp .env.example .env
+yarn start
+```
+
+## API
+
 ```bash
 curl "http://localhost:3009/rounds?page=1&limit=100"
 ```
@@ -17,3 +28,5 @@ curl -X POST http://localhost:3009/rounds \
 
 * Set fee to 2%
 * Add admin only to claim fn
+* Reward distribution scheduler
+
