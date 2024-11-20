@@ -1,5 +1,6 @@
-require("dotenv").config();
 const { ethers } = require("ethers");
+const log4js = require("log4js");
+const logger = log4js.getLogger();
 
 const PROVIDER_URL = process.env.PROVIDER_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
@@ -17,12 +18,16 @@ const ROUND_FACTORY_ABI = [
     "function deploySingleRoundV1(tuple(uint40 roundId, address initialAdmin, bool isFeeEnabled, bool isLeafVerificationEnabled, uint256 awardAmount, tuple(uint8 assetType, address token, uint256 identifier) award)) external returns (address)"
 ];
 
-(async () => {
+const createRound = async () => {
     try {
         const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
+        logger.info("Initialized JSON RPC Provider.");
+
         const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+        logger.info("Wallet loaded successfully.");
 
         const roundFactory = new ethers.Contract(ROUND_FACTORY_ADDRESS, ROUND_FACTORY_ABI, wallet);
+        logger.info(`Contract loaded at address: ${ROUND_FACTORY_ADDRESS}`);
 
         const ROUND_CONFIG = [
             ROUND_ID, // uint40 roundId
@@ -37,19 +42,24 @@ const ROUND_FACTORY_ABI = [
             ],
         ];
 
-        console.log("Deploying Single Round V1...");
-        const tx = await roundFactory.deploySingleRoundV1(ROUND_CONFIG, {
-        });
+        logger.info("Starting deployment of Single Round V1 with configuration:", ROUND_CONFIG);
 
-        console.log("Transaction sent:", tx.hash);
+        const tx = await roundFactory.deploySingleRoundV1(ROUND_CONFIG);
+        logger.info("Transaction sent:", { hash: tx.hash });
 
         const receipt = await tx.wait();
-        console.log("Transaction confirmed:", receipt.transactionHash);
+        logger.info("Transaction confirmed:", { receipt });
 
         const newRoundAddress = receipt.logs[0].address;
-        console.log("New Single Round V1 deployed at address:", newRoundAddress);
+        logger.info("New Single Round V1 deployed at address:", newRoundAddress);
+
         return newRoundAddress
     } catch (error) {
-        console.error("Error deploying Single Round V1:", error);
+        logger.error("Error deploying Single Round V1:", error);
     }
-})();
+}
+
+
+module.exports = {
+    createRound
+}

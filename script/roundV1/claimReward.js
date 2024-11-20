@@ -1,13 +1,11 @@
 require("dotenv").config();
 const { ethers } = require("ethers");
 
-// Environment variables
 const PROVIDER_URL = process.env.PROVIDER_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
 const ROUND_CONTRACT_ADDRESS = process.env.ROUND_CONTRACT_ADDRESS || '0xc0f9929de2823600EDa407d99bA3f0966bdc70D4';
 
-// Contract ABI for SingleRoundV1
 const ROUND_ABI = [
   "function claim(uint256 fid, address to, uint256 amount, bytes32[] calldata proof, bytes calldata sig) external",
   "function factory() external view returns (address)",

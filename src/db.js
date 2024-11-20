@@ -3,10 +3,11 @@ const csv = require('csv-parser');
 const path = require('path');
 
 const dbPath = path.join(__dirname, '..', 'db', 'rounds.csv');
+const CSV_HEADER = 'amount,address,channel,createdAt,roundInterval\n'
 
-fs.ensureFileSync(dbPath); // Ensure the file exists
+fs.ensureFileSync(dbPath); 
 if (fs.readFileSync(dbPath, 'utf8').trim() === '') {
-    fs.writeFileSync(dbPath, 'amount,address,channel,createdAt,roundInterval\n'); // Write header if empty
+    fs.writeFileSync(dbPath, CSV_HEADER); 
 }
 
 const loadRounds = async () => {
