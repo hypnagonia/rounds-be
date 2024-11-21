@@ -10,7 +10,10 @@ const assetTypes = {
     'erc1155': 4,
 }
 
+const logFilename = 'app.log'
+
 module.exports = {
     roundTypes,
-    assetTypes
+    assetTypes,
+    logFilename
 };

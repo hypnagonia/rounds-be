@@ -10,6 +10,9 @@ const { getUsersInChannel } = require('./openrankClient')
 const app = express();
 const { createRoundV1 } = require('./roundV1Service')
 const { isZeroAddress } = require('./utils')
+const { logFilename } = require('./constants')
+const path = require('path');
+const fs = require('fs');
 
 app.use(express.json());
 app.use(morgan('dev'));
@@ -26,10 +29,12 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 // return response and create a round async
 
 app.post('/rounds', async (req, res) => {
-    const { amount, tokenAddress, channel, roundInterval } = req.body;
+    const { amount, assetAddress, channel, roundInterval, topUserCount } = req.body;
+    // top users
+    // date range for recurring rounds
 
-    if (!amount || !address || !channel || !roundInterval) {
-        return res.status(400).json({ error: 'All fields are required' });
+    if (!amount || !assetAddress || !channel || !roundInterval || !topUserCount) {
+        return res.status(400).json({ error: 'All fields are required { amount, assetAddress, channel, roundInterval, topUserCount }' });
     }
 
     const usersInChannel = await getUsersInChannel(channel)
@@ -39,30 +44,47 @@ app.post('/rounds', async (req, res) => {
         return
     }
 
-    // todo check if sender is in the channel?
-    
+    // todo check if sender is in the channel
+
     let assetType
-    if (isZeroAddress(tokenAddress)) {
+    if (isZeroAddress(assetAddress)) {
         assetType = assetTypes.eth
     } else {
         assetType = assetTypes.erc20
     }
 
 
-    if (!ethers.isAddress(address)) {
-        res.status(400).json({ error: `${address} must be a valid ethereum 0x address` });
+    if (!ethers.isAddress(assetAddress)) {
+        res.status(400).json({ error: `${assetAddress} must be a valid ethereum 0x address` });
         return
     }
 
-    // const roundAddress = createRoundV1()
+    const roundId = 4 // todo
+    let roundAddress
     const type = roundTypes.v1
     const createdAt = Date.now().toString()
 
     try {
-        await saveRound({ type, amount, address, channel, roundInterval, createdAt });
+        roundAddress = await createRoundV1({ assetType, assetAddress, roundId, amount })
+    }
+    catch (e) {
+        logger.error('Error during creating round', e);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 
-        // todo address
-        res.status(201).json({ message: 'Round created successfully' });
+    if (!ethers.isAddress(roundAddress)) {
+        logger.error(`Error during creating a round ${roundAddress}`)
+    }
+
+    console.log({roundAddress})
+    try {
+        await saveRound({ type, amount, assetAddress, channel, roundInterval, createdAt, topUserCount, roundAddress, roundId });
+
+        logger.info(`New round created! 
+            ${JSON.stringify({ type, amount, assetAddress, channel, roundInterval, createdAt, topUserCount, roundAddress, roundId })}
+            `)
+
+        res.status(201).json({ message: 'Round created successfully', roundAddress });
     } catch (error) {
         logger.error('Error saving to DB:', error);
         res.status(500).json({ error: 'Internal server error' });
@@ -92,9 +114,55 @@ app.get('/rounds', async (req, res) => {
     }
 });
 
-const init = () => {
-    const PORT = 3009;
+const getLastLines = (filePath, maxLines, callback) => {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            return callback(err, null);
+        }
 
+        const lines = data.split('\n');
+        const lastLines = lines.slice(-maxLines).join('\n');
+        callback(null, lastLines);
+    });
+};
+
+app.get('/log', (req, res) => {
+    const logFilePath = path.join(__dirname, '..', logFilename);
+
+    const linesCount = 500
+
+    if (!fs.existsSync(logFilePath)) {
+        return res.status(404).send('<h1>Log file not found</h1>');
+    }
+
+    getLastLines(logFilePath, linesCount, (err, lastLines) => {
+        if (err) {
+            console.error('Error reading log file:', err);
+            return res.status(500).send('<h1>Error reading log file</h1>');
+        }
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Log File</title>
+        </head>
+        <body>
+          <h1>Application Log (Last ${linesCount} Lines)</h1>
+          <pre style="white-space: pre-wrap; word-wrap: break-word;">${lastLines}</pre>
+        </body>
+        </html>
+      `;
+
+        res.send(htmlContent);
+    });
+});
+
+const PORT = 3009;
+
+const init = () => {
     app.listen(PORT, () => {
         logger.info(`Server is running on http://localhost:${PORT}`);
     });
