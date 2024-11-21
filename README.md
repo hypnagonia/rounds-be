@@ -20,7 +20,7 @@ curl "http://localhost:3009/rounds?page=1&limit=100"
 curl -X POST http://localhost:3009/rounds \
 -H "Content-Type: application/json" \
 -d '{
-  "amount": "1",
+  "amount": "0.01",
   "assetAddress": "0x0000000000000000000000000000000000000000",
   "channel": "music",
   "roundInterval": "10m",

@@ -1,3 +1,7 @@
+const { ethers } = require("ethers");
+const { isZeroAddress } = require('./utils')
+
+const PROVIDER_URL = process.env.PROVIDER_URL;
 const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
 
 const erc20ABI = [
@@ -5,21 +9,21 @@ const erc20ABI = [
 ];
 
 async function getBalance(address, tokenAddress) {
-    if (!ethers.utils.isAddress(address)) {
+    if (!ethers.isAddress(address)) {
         throw new Error('Invalid address');
     }
 
-    if (tokenAddress === ethers.constants.AddressZero) {
+    if (isZeroAddress(tokenAddress)) {
         const balance = await provider.getBalance(address);
-        return balance // ethers.formatEther(balance);
+        return ethers.formatEther(balance.toString());
     } else {
-        if (!ethers.utils.isAddress(tokenAddress)) {
+        if (!ethers.isAddress(tokenAddress)) {
             throw new Error('Invalid token address');
         }
 
         const contract = new ethers.Contract(tokenAddress, erc20ABI, provider);
         const balance = await contract.balanceOf(address);
-        return balance // ethers.utils.formatUnits(balance, 18); 
+        return ethers.formatUnits(balance, 18); 
     }
 }
 

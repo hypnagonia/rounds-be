@@ -59,7 +59,7 @@ app.post('/rounds', async (req, res) => {
         return
     }
 
-    const roundId = 4 // todo
+    const roundId = 12 // todo
     let roundAddress
     const type = roundTypes.v1
     const createdAt = Date.now().toString()
@@ -69,7 +69,8 @@ app.post('/rounds', async (req, res) => {
     }
     catch (e) {
         logger.error('Error during creating round', e);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Error during creating round ' + e });
+        return 
     }
 
     if (!ethers.isAddress(roundAddress)) {

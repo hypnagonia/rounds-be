@@ -25,7 +25,7 @@ const createRoundV1 = async ({assetType, assetAddress, roundId, amount}) => {
     try {
         const ASSET_TYPE = assetType;
         const ASSET_ADDRESS = assetAddress
-        const AWARD_AMOUNT = amount
+        const AWARD_AMOUNT = ethers.parseEther(amount)
 
         const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
         logger.info("Wallet loaded successfully.");
@@ -38,7 +38,7 @@ const createRoundV1 = async ({assetType, assetAddress, roundId, amount}) => {
             INITIAL_ADMIN, // address initialAdmin
             IS_FEE_ENABLED, // bool isFeeEnabled
             IS_LEAF_VERIFICATION_ENABLED, // bool isLeafVerificationEnabled
-            +AWARD_AMOUNT, // uint256 awardAmount
+            AWARD_AMOUNT, // uint256 awardAmount
             [
                 +ASSET_TYPE, // uint8 assetType: 1 (ETH), 2 (ERC20), 3 (ERC721), etc.
                 ASSET_ADDRESS, // address token: Token address (zero for ETH)
@@ -55,7 +55,7 @@ const createRoundV1 = async ({assetType, assetAddress, roundId, amount}) => {
         logger.info("Transaction confirmed:", { receipt });
 
         const newRoundAddress = receipt.logs[0].address;
-        logger.info("New Single Round V1 deployed at address:", newRoundAddress);
+        logger.info("New Round V1 deployed at address:", newRoundAddress);
 
         return newRoundAddress
     } catch (error) {
