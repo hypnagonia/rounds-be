@@ -4,7 +4,7 @@ const { sendReward } = require('./roundV1Service')
 const { getUsersInChannel, getAddressByFids } = require('./openrankClient')
 const log4js = require("log4js");
 const logger = log4js.getLogger('scheduler');
-const { ethers, BigNumber } = require("ethers");
+const { ethers } = require("ethers");
 
 const INTERVAL_MS = 1000 * 60
 
@@ -15,7 +15,6 @@ const init = () => {
 const loop = async () => {
     logger.info('Check rounds')
     const rounds = await loadRounds();
-
 
     /**
         distrubition is not atomic, so during sending the tokens number of people in the channel may change
@@ -31,10 +30,9 @@ const loop = async () => {
         const amountPerUser = round.amount / round.topUserCount;
         const amountNeeded = usersLeftToReward * amountPerUser
 
-        // filter out invalid addresses
         if (balance < amountPerUser) {
-            logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channel}`)
-            // return
+            logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channel} channel`)
+            return
         }
 
         const usersInChannel = await getUsersInChannel(round.channel, round.topUserCount)
@@ -48,7 +46,9 @@ const loop = async () => {
             const recipientAddress = usersDataWithValidAddresses[i].address
             const roundAddress = round.roundAddress
             const assetAddress = round.assetAddress
-            const amount = round.amount / usersDataWithValidAddresses.length
+            
+            // todo decimals
+            const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(18)
             const fid = usersDataWithValidAddresses[i].fid
             logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, amount })
             await sendReward({ fid, roundAddress, recipientAddress, assetAddress, amount })

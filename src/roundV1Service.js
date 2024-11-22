@@ -8,6 +8,7 @@ const ROUND_FACTORY_ADDRESS = process.env.ROUND_FACTORY_ADDRESS;
 const INITIAL_ADMIN = process.env.INITIAL_ADMIN;
 const IS_FEE_ENABLED = process.env.IS_FEE_ENABLED === "true";
 const IS_LEAF_VERIFICATION_ENABLED = process.env.IS_LEAF_VERIFICATION_ENABLED === "true";
+const ASSET_IDENTIFIER = 0
 
 const CLAIM_TYPEHASH = ethers.keccak256(
     ethers.toUtf8Bytes("Claim(uint256 fid,address to,uint256 amount)")
@@ -110,7 +111,7 @@ const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, a
         const structHash = ethers.keccak256(
             abiCoder.encode(
                 ["bytes32", "uint256", "address", "uint256"],
-                [CLAIM_TYPEHASH, fid, recipient, amountNormalized]
+                [CLAIM_TYPEHASH, fid, recipientAddress, amountNormalized]
             )
         );
 
@@ -137,7 +138,7 @@ const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, a
         logger.info(`Transaction sent: ${tx.hash}`);
 
         const receipt = await tx.wait();
-        logger.info(`Reward sent. Transaction confirmed: ${receipt.transactionHash} to ${recipientAddress} ${amount}`);
+        logger.info(`Reward sent to ${recipientAddress} ${amount}`);
     } catch (error) {
         logger.error("Error in claim process:", error);
     }
