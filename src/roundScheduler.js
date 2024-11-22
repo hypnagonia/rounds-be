@@ -1,5 +1,6 @@
-const { loadRounds, saveRound } = require('./db');
+const { loadRounds, saveRound, updateRound } = require('./db');
 const { getBalance } = require('./ethClient')
+const { sendReward } = require('./roundV1Service')
 const { getUsersInChannel, getAddressByFids } = require('./openrankClient')
 const log4js = require("log4js");
 const logger = log4js.getLogger('scheduler');
@@ -13,21 +14,14 @@ const init = () => {
 
 const loop = async () => {
     logger.info('Check rounds')
-
     const rounds = await loadRounds();
 
-    // get all rounds +
-    // find rounds to reward 
-    // check balance and users left
-    // get users addresses and find top ones
-    // transfer reward one by one and save progress
-    // update lastUpdated
 
     /**
         distrubition is not atomic, so during sending the tokens number of people in the channel may change
         userReward is always calculated according config params amount / number of top users
      */
-    const sendReward = async (round) => {
+    const processRound = async (round) => {
         const usersLeftToReward = round.topUserCount - round.rewardedUsersCount
         if (usersLeftToReward <= 0) {
             return
@@ -36,28 +30,42 @@ const loop = async () => {
         const balance = await getBalance(round.roundAddress, round.assetAddress)
         const amountPerUser = round.amount / round.topUserCount;
         const amountNeeded = usersLeftToReward * amountPerUser
-        
-        console.log({ balance, amountNeeded, amountPerUser })
+
+        // filter out invalid addresses
         if (balance < amountPerUser) {
             logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channel}`)
-            // todo
             // return
         }
 
         const usersInChannel = await getUsersInChannel(round.channel, round.topUserCount)
-        const userFidsToReward = usersInChannel.slice(round.rewardedUsersCount) // skip already rewarded users
+        const userFidsToReward = usersInChannel.slice(round.rewardedUsersCount)
 
-        console.log({ userFidsToReward })
-        const usersAddresses = await getAddressByFids(userFidsToReward.map(e => e.fid))
-        console.log({ usersAddresses })
+        const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
+
+        const usersDataWithValidAddresses = usersData.filter(a => ethers.isAddress(a.address))
+
+        for (let i = 0; i < usersDataWithValidAddresses.length; i++) {
+            const recipientAddress = usersDataWithValidAddresses[i].address
+            const roundAddress = round.roundAddress
+            const assetAddress = round.assetAddress
+            const amount = round.amount / usersDataWithValidAddresses.length
+            const fid = usersDataWithValidAddresses[i].fid
+            logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, amount })
+            await sendReward({ fid, roundAddress, recipientAddress, assetAddress, amount })
+        }
+
+        const lastUpdated = Date.now()
+
+        await updateRound(round.roundId, { lastUpdated })
+        logger.info(`Round ${round.roundId} reward has been sent`)
+
     }
 
     for (let i = 0; i < rounds.length; i++) {
         const r = rounds[i]
 
-        // todo change roundInterval
         if (!+r.lastUpdated && r.roundInterval === '10m') {
-            sendReward(r)
+            await processRound(r)
         }
     }
 

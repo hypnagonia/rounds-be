@@ -36,7 +36,7 @@ const getAddressByFids = async (fids = []) => {
             return item ? item.address : null;
         });
 
-        return addresses
+        return addresses.map((a, i) => ({ address: addresses[i], fid: fids[i] }))
     } catch (error) {
         console.error('Error fetching addresses by FIDs:', error.message);
         throw error;

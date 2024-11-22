@@ -28,13 +28,33 @@ const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 // todo
 // return response and create a round async
 
+
+/** 
+channelId: "music"
+dateRange: Object { from: "2024-12-22T18:30:00.000Z", to: "2024-12-26T18:30:00.000Z" }
+distributionType: "recurring"
+eligibleUsersCount: 21
+frequencyDays: 2
+recipientPercentage: 10
+tokenAddress: "0x0000000000000000000000000000000000000000"
+tokenAmount: 100
+*/
+
 app.post('/rounds', async (req, res) => {
-    const { amount, assetAddress, channel, roundInterval, topUserCount } = req.body;
+    const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount } = req.body;
+    const channel = channelId
+    const amount = tokenAmount
+    const topUserCount = eligibleUsersCount
+    const roundInterval = frequencyDays
+    const assetAddress = tokenAddress
+
     // top users
     // date range for recurring rounds
 
     if (!amount || !assetAddress || !channel || !roundInterval || !topUserCount) {
-        return res.status(400).json({ error: 'All fields are required { amount, assetAddress, channel, roundInterval, topUserCount }' });
+        return res.status(400).json({ error: `All fields are required { amount, assetAddress, channel, roundInterval, topUserCount }
+            ${JSON.stringify({ amount, assetAddress, channel, roundInterval, topUserCount })}`
+         });
     }
 
     const usersInChannel = await getUsersInChannel(channel)
@@ -59,7 +79,8 @@ app.post('/rounds', async (req, res) => {
         return
     }
 
-    const roundId = 12 // todo
+    const dbRounds = await loadRounds();
+    const roundId = 100 + dbRounds.length + Math.floor(Math.random() * 1000001)
     let roundAddress
     const type = roundTypes.v1
     const createdAt = Date.now().toString()

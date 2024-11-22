@@ -4,7 +4,7 @@ const { ethers } = require("ethers");
 const PROVIDER_URL = process.env.PROVIDER_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 
-const ROUND_CONTRACT_ADDRESS = process.env.ROUND_CONTRACT_ADDRESS || '0xc0f9929de2823600EDa407d99bA3f0966bdc70D4';
+const ROUND_CONTRACT_ADDRESS = '0xeD833A6fC338C90CFc283a353bb963CE8fC2921E';
 
 const ROUND_ABI = [
   "function claim(uint256 fid, address to, uint256 amount, bytes32[] calldata proof, bytes calldata sig) external",
@@ -46,7 +46,7 @@ const CLAIM_TYPEHASH = ethers.keccak256(
     };
 
     const fid = 2;
-    const recipient = "0x41c7104Ca78815A0c2Be11BdE14a964547E3ce2b";
+    const recipient = "0xefd0a6cda81ac9fb5537dfb9f7d78bcdad2c8136";
     const amount = ethers.parseEther("0.001");
     const proof = [] // ["0x0000000000000000000000000000000000000000000000000000000000000000"];
 
