@@ -1,6 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
-const { loadRounds, saveRound } = require('./db');
+const { loadRounds, saveRound, loadRoundReward } = require('./db');
 const { roundTypes, assetTypes } = require('./constants')
 const { ethers } = require("ethers");
 const log4js = require("log4js");
@@ -42,7 +42,6 @@ tokenAmount: 100
 
 app.post('/rounds', async (req, res) => {
     const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount } = req.body;
-    const channel = channelId
     const amount = tokenAmount
     const topUserCount = eligibleUsersCount
     const roundInterval = frequencyDays
@@ -51,16 +50,16 @@ app.post('/rounds', async (req, res) => {
     // top users
     // date range for recurring rounds
 
-    if (!amount || !assetAddress || !channel || !roundInterval || !topUserCount) {
-        return res.status(400).json({ error: `All fields are required { amount, assetAddress, channel, roundInterval, topUserCount }
-            ${JSON.stringify({ amount, assetAddress, channel, roundInterval, topUserCount })}`
+    if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount) {
+        return res.status(400).json({ error: `All fields are required { amount, assetAddress, channelId, roundInterval, topUserCount }
+            ${JSON.stringify({ amount, assetAddress, channelId, roundInterval, topUserCount })}`
          });
     }
 
-    const usersInChannel = await getUsersInChannel(channel)
+    const usersInChannel = await getUsersInChannel(channelId)
 
     if (usersInChannel.length === 0) {
-        res.status(400).json({ error: `Channel ${channel} is not tracked at https://graph.cast.k3l.io/channels/rankings/${channel}` });
+        res.status(400).json({ error: `Channel ${channelId} is not tracked at https://graph.cast.k3l.io/channels/rankings/${channelId}` });
         return
     }
 
@@ -98,12 +97,11 @@ app.post('/rounds', async (req, res) => {
         logger.error(`Error during creating a round ${roundAddress}`)
     }
 
-    console.log({roundAddress})
     try {
-        await saveRound({ type, amount, assetAddress, channel, roundInterval, createdAt, topUserCount, roundAddress, roundId });
+        await saveRound({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId });
 
         logger.info(`New round created! 
-            ${JSON.stringify({ type, amount, assetAddress, channel, roundInterval, createdAt, topUserCount, roundAddress, roundId })}
+            ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId })}
             `)
 
         res.status(201).json({ message: 'Round created successfully', roundAddress });
@@ -129,6 +127,64 @@ app.get('/rounds', async (req, res) => {
             page: pageNumber,
             limit: pageSize,
             data: paginatedRounds,
+        });
+    } catch (error) {
+        logger.error('Error reading from DB:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+app.get('/rounds/channel/:channelId', async (req, res) => {
+    const { channelId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const pageNumber = parseInt(page, 10);
+    const pageSize = parseInt(limit, 10);
+
+    try {
+        const allRounds = await loadRounds(); 
+        const filteredRounds = allRounds.filter(round => round.channelId === channelId);
+
+
+        const startIndex = (pageNumber - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedRounds = filteredRounds.slice(startIndex, endIndex);
+
+        res.status(200).json({
+            total: filteredRounds.length,
+            page: pageNumber,
+            limit: pageSize,
+            data: paginatedRounds,
+        });
+    } catch (error) {
+        logger.error('Error reading from DB:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+app.get('/rounds/:roundAddress/rewards', async (req, res) => {
+    const { roundAddress } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const pageNumber = parseInt(page, 10);
+    const pageSize = parseInt(limit, 10);
+
+    if (!ethers.isAddress(roundAddress)) {
+        res.status(400).json({ error: `${roundAddress} must be a valid ethereum 0x address` });
+        return
+    }
+
+    try {
+        const allRounds = await loadRoundReward(roundAddress); 
+
+        const startIndex = (pageNumber - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedRoundRewards = allRounds.slice(startIndex, endIndex);
+
+        res.status(200).json({
+            total: allRounds.length,
+            page: pageNumber,
+            limit: pageSize,
+            data: paginatedRoundRewards,
         });
     } catch (error) {
         logger.error('Error reading from DB:', error);

@@ -139,6 +139,8 @@ const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, a
 
         const receipt = await tx.wait();
         logger.info(`Reward sent to ${recipientAddress} ${amount}`);
+
+        return tx.hash
     } catch (error) {
         logger.error("Error in claim process:", error);
     }

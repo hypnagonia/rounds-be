@@ -1,4 +1,4 @@
-const { loadRounds, saveRound, updateRound } = require('./db');
+const { loadRounds, saveRound, updateRound, saveRoundRewardDetails } = require('./db');
 const { getBalance } = require('./ethClient')
 const { sendReward } = require('./roundV1Service')
 const { getUsersInChannel, getAddressByFids } = require('./openrankClient')
@@ -13,7 +13,7 @@ const init = () => {
 }
 
 const loop = async () => {
-    logger.info('Check rounds')
+    logger.info('Distributing reward')
     const rounds = await loadRounds();
 
     /**
@@ -31,7 +31,7 @@ const loop = async () => {
         const amountNeeded = usersLeftToReward * amountPerUser
 
         if (balance < amountPerUser) {
-            logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channel} channel`)
+            logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channelId} channel`)
             return
         }
 
@@ -51,7 +51,9 @@ const loop = async () => {
             const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(18)
             const fid = usersDataWithValidAddresses[i].fid
             logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, amount })
-            await sendReward({ fid, roundAddress, recipientAddress, assetAddress, amount })
+            const txHash = await sendReward({ fid, roundAddress, recipientAddress, assetAddress, amount })
+
+            await saveRoundRewardDetails(round, { fid, roundAddress, recipientAddress, assetAddress, amountSent: amount, txHash })
         }
 
         const lastUpdated = Date.now()
