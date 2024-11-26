@@ -1,8 +1,8 @@
 require("dotenv").config();
-const { init: initApi } = require('./api');
+const { init: initApi } = require('./api/api');
 const log4js = require("log4js");
 const { logFilename } = require('./constants')
-const { init: initScheduler } = require('./roundScheduler')
+const { init: initScheduler } = require('./service/roundScheduler')
 log4js.configure({
     appenders: {
         console: { type: "console" },

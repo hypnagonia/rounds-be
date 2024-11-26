@@ -1,7 +1,7 @@
-const { loadRounds, saveRound, updateRound, saveRoundRewardDetails } = require('./db');
-const { getBalance } = require('./ethClient')
+const { loadRounds, saveRound, updateRound, saveRoundRewardDetails } = require('../db/db');
+const { getBalance } = require('../client/ethClient')
 const { sendReward } = require('./roundV1Service')
-const { getUsersInChannel, getAddressByFids } = require('./openrankClient')
+const { getUsersInChannel, getAddressByFids } = require('../client/openrankClient')
 const log4js = require("log4js");
 const logger = log4js.getLogger('scheduler');
 const { ethers } = require("ethers");
@@ -46,9 +46,10 @@ const loop = async () => {
             const recipientAddress = usersDataWithValidAddresses[i].address
             const roundAddress = round.roundAddress
             const assetAddress = round.assetAddress
-            
+
             // todo decimals
-            const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(18)
+            const decimals = 18
+            const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(decimals)
             const fid = usersDataWithValidAddresses[i].fid
             logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, amount })
             const txHash = await sendReward({ fid, roundAddress, recipientAddress, assetAddress, amount })
@@ -67,7 +68,12 @@ const loop = async () => {
         const r = rounds[i]
 
         if (!+r.lastUpdated && r.roundInterval === '10m') {
-            await processRound(r)
+            try {
+                await processRound(r)
+            } catch (e) {
+                logger.error(e)
+                setTimeout(loop, INTERVAL_MS)
+            }
         }
     }
 

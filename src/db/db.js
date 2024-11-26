@@ -9,13 +9,13 @@ const dbPath = path.join(__dirname, '..', 'db', 'rounds.csv');
     topUserCount - number of top users get reward
     type - type of round
     amount - amount of token to distribute 
-    channel - cura channel string
+    channelId - cura channel string
     createdAt - timestamp
     roundInterval - WIP
     lastUpdated - time of last reward
     rewardedUsersCount - number of users got reward
 */
-const CSV_HEADER = 'roundId,topUserCount,type,amount,assetAddress,channelId,roundAddress,createdAt,roundInterval,lastUpdated,rewardedUsersCount\n'
+const CSV_HEADER = 'roundId,topUserCount,type,amount,assetAddress,channelId,roundAddress,createdAt,roundInterval,lastUpdated\n'
 
 fs.ensureFileSync(dbPath);
 if (fs.readFileSync(dbPath, 'utf8').trim() === '') {
@@ -65,7 +65,7 @@ const saveRound = async (round) => {
 
     const lastUpdated = 0
 
-    const newRound = `${roundId},${topUserCount},${type},${amount},${assetAddress},${channelId},${roundAddress},${createdAt},${roundInterval},${lastUpdated},${rewardedUsersCount}\n`;
+    const newRound = `${roundId},${topUserCount},${type},${amount},${assetAddress},${channelId},${roundAddress},${createdAt},${roundInterval},${lastUpdated}\n`;
     await fs.appendFile(dbPath, newRound);
 };
 
@@ -102,7 +102,7 @@ const updateRound = async (roundId, updatedFields) => {
     const csvContent = [
         CSV_HEADER.trim(),
         ...rounds.map((r) =>
-            `${r.roundId},${r.topUserCount},${r.type},${r.amount},${r.assetAddress},${r.channelId},${r.roundAddress},${r.createdAt},${r.roundInterval},${r.lastUpdated},${r.rewardedUsersCount}`
+            `${r.roundId},${r.topUserCount},${r.type},${r.amount},${r.assetAddress},${r.channelId},${r.roundAddress},${r.createdAt},${r.roundInterval},${r.lastUpdated}`
         ),
     ].join('\n');
 

@@ -1,16 +1,16 @@
 const express = require('express');
 const morgan = require('morgan');
-const { loadRounds, saveRound, loadRoundReward } = require('./db');
-const { roundTypes, assetTypes } = require('./constants')
+const { loadRounds, saveRound, loadRoundReward } = require('../db/db');
+const { roundTypes, assetTypes } = require('../constants')
 const { ethers } = require("ethers");
 const log4js = require("log4js");
 const logger = log4js.getLogger();
 const httpLogger = log4js.getLogger('http');
-const { getUsersInChannel } = require('./openrankClient')
+const { getUsersInChannel } = require('../client/openrankClient')
 const app = express();
-const { createRoundV1 } = require('./roundV1Service')
-const { isZeroAddress } = require('./utils')
-const { logFilename } = require('./constants')
+const { createRoundV1 } = require('../service/roundV1Service')
+const { isZeroAddress } = require('../utils')
+const { logFilename } = require('../constants')
 const path = require('path');
 const fs = require('fs');
 
@@ -21,8 +21,6 @@ app.use(log4js.connectLogger(httpLogger, {
     level: 'info',
     format: ':method :url :status :response-time ms',
 }));
-
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 // this is go-through request
 // todo
@@ -41,13 +39,13 @@ tokenAmount: 100
 */
 
 app.post('/rounds', async (req, res) => {
-    const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount } = req.body;
+    const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount, dateRange } = req.body;
     const amount = tokenAmount
     const topUserCount = eligibleUsersCount
     const roundInterval = frequencyDays
     const assetAddress = tokenAddress
 
-    // top users
+    // dateRange: Object { from: "2024-11-22T12:38:55.347Z", to: "2024-12-12T12:38:55.347Z" }
     // date range for recurring rounds
 
     if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount) {

@@ -1,5 +1,5 @@
 const { ethers } = require("ethers");
-const { isZeroAddress } = require('./utils')
+const { isZeroAddress } = require('../utils')
 
 const PROVIDER_URL = process.env.PROVIDER_URL;
 const provider = new ethers.JsonRpcProvider(PROVIDER_URL);
@@ -23,7 +23,9 @@ async function getBalance(address, tokenAddress) {
 
         const contract = new ethers.Contract(tokenAddress, erc20ABI, provider);
         const balance = await contract.balanceOf(address);
-        return ethers.formatUnits(balance, 18); 
+        // todo decimals
+        const decimals = 18
+        return ethers.formatUnits(balance, decimals); 
     }
 }
 
