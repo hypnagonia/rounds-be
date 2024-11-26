@@ -1,52 +1,17 @@
-const fs = require('fs-extra');
-const csv = require('csv-parser');
+const {Level} = require('level');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '..', 'db', 'rounds.csv');
+const dbPath = path.join(__dirname, '..', 'db');
+const roundsDb = new Level(path.join(dbPath, 'rounds'), { valueEncoding: 'json' });
+const rewardsDb = new Level(path.join(dbPath, 'rewards'), { valueEncoding: 'json' });
 
-/** 
-    roundId - round id
-    topUserCount - number of top users get reward
-    type - type of round
-    amount - amount of token to distribute 
-    channelId - cura channel string
-    createdAt - timestamp
-    roundInterval - WIP
-    lastUpdated - time of last reward
-    rewardedUsersCount - number of users got reward
-*/
-const CSV_HEADER = 'roundId,topUserCount,type,amount,assetAddress,channelId,roundAddress,createdAt,roundInterval,lastUpdated\n'
-
-fs.ensureFileSync(dbPath);
-if (fs.readFileSync(dbPath, 'utf8').trim() === '') {
-    fs.writeFileSync(dbPath, CSV_HEADER);
-}
-
-const getRoundRewardName = roundAddress => `rewards-${roundAddress}.csv`
-
+// todo pagination
 const loadRounds = async () => {
     const rounds = [];
-
-    return new Promise((resolve, reject) => {
-        fs.createReadStream(dbPath)
-            .pipe(csv())
-            .on('data', (data) => rounds.push(data))
-            .on('end', () => resolve(rounds))
-            .on('error', (error) => reject(error));
-    });
-};
-
-const loadRoundReward = async (roundAddress) => {
-    const dbPath = path.join(__dirname, '..', 'db', getRoundRewardName(roundAddress));
-    
-    const rounds = [];
-    return new Promise((resolve, reject) => {
-        fs.createReadStream(dbPath)
-            .pipe(csv())
-            .on('data', (data) => rounds.push(data))
-            .on('end', () => resolve(rounds))
-            .on('error', (error) => reject(error));
-    });
+    for await (const [key, value] of roundsDb.iterator()) {
+        rounds.push(value);
+    }
+    return rounds;
 };
 
 const saveRound = async (round) => {
@@ -60,53 +25,74 @@ const saveRound = async (round) => {
         createdAt,
         rewardedUsersCount = 0,
         roundAddress,
-        roundId
+        roundId,
     } = round;
 
-    const lastUpdated = 0
+    const lastUpdated = 0;
+    const newRound = {
+        roundId,
+        topUserCount,
+        type,
+        amount,
+        assetAddress,
+        channelId,
+        roundAddress,
+        createdAt,
+        roundInterval,
+        lastUpdated,
+        rewardedUsersCount,
+    };
 
-    const newRound = `${roundId},${topUserCount},${type},${amount},${assetAddress},${channelId},${roundAddress},${createdAt},${roundInterval},${lastUpdated}\n`;
-    await fs.appendFile(dbPath, newRound);
+    await roundsDb.put(roundAddress, newRound);
+};
+
+const updateRound = async (roundAddress, updatedFields) => {
+    try {
+        const round = await roundsDb.get(roundAddress);
+        const updatedRound = { ...round, ...updatedFields };
+        await roundsDb.put(roundAddress, updatedRound);
+    } catch (error) {
+        if (error.notFound) {
+            throw new Error(`Round with roundId ${roundId} not found`);
+        }
+        throw error;
+    }
+};
+
+const loadRoundReward = async (roundAddress) => {
+    try {
+        // Fetch the array of rewards for the roundAddress
+        const rewards = await rewardsDb.get(roundAddress);
+        return rewards;
+    } catch (error) {
+        if (error.notFound) {
+            // Return an empty array if no rewards exist for the roundAddress
+            return [];
+        }
+        throw error;
+    }
 };
 
 const saveRoundRewardDetails = async (round, rewardData) => {
-    const {
-        roundAddress,
-    } = round;
-    const { fid, recipientAddress, amountSent, txHash } = rewardData
+    const { roundAddress } = round;
+    const { fid, recipientAddress, amountSent, txHash } = rewardData;
 
-    const dbPath = path.join(__dirname, '..', 'db', getRoundRewardName(roundAddress));
+    const timestamp = Date.now();
+    const rewardDetails = {
+        fid,
+        recipientAddress,
+        amountSent,
+        timestamp,
+        txHash,
+    };
 
-    const CSV_ROUND_REWARD = 'fid,recipientAddress,amountSent,timestamp,txHash\n'
-    fs.ensureFileSync(dbPath);
-    if (fs.readFileSync(dbPath, 'utf8').trim() === '') {
-        fs.writeFileSync(dbPath, CSV_ROUND_REWARD);
+    try {
+        const rewards = await loadRoundReward(roundAddress);
+        rewards.push(rewardDetails);
+        await rewardsDb.put(roundAddress, rewards);
+    } catch (error) {
+        throw new Error(`Failed to save reward details for roundAddress ${roundAddress}: ${error.message}`);
     }
-
-    const timestamp = Date.now()
-
-    const newRound = `${fid},${recipientAddress},${amountSent},${timestamp},${txHash}\n`;
-    await fs.appendFile(dbPath, newRound);
-};
-
-const updateRound = async (roundId, updatedFields) => {
-    const rounds = await loadRounds();
-
-    const index = rounds.findIndex((round) => round.roundId === roundId);
-    if (index === -1) {
-        throw new Error(`Round with roundId ${roundId} not found`);
-    }
-
-    const updatedRound = { ...rounds[index], ...updatedFields };
-    rounds[index] = updatedRound;
-    const csvContent = [
-        CSV_HEADER.trim(),
-        ...rounds.map((r) =>
-            `${r.roundId},${r.topUserCount},${r.type},${r.amount},${r.assetAddress},${r.channelId},${r.roundAddress},${r.createdAt},${r.roundInterval},${r.lastUpdated}`
-        ),
-    ].join('\n');
-
-    await fs.writeFile(dbPath, csvContent);
 };
 
 module.exports = {
@@ -114,5 +100,5 @@ module.exports = {
     saveRound,
     updateRound,
     saveRoundRewardDetails,
-    loadRoundReward
+    loadRoundReward,
 };

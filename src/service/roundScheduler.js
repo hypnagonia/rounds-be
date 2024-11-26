@@ -59,7 +59,7 @@ const loop = async () => {
 
         const lastUpdated = Date.now()
 
-        await updateRound(round.roundId, { lastUpdated })
+        await updateRound(round.roundAddress, { lastUpdated })
         logger.info(`Round ${round.roundId} reward has been sent`)
 
     }
