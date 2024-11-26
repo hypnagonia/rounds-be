@@ -26,7 +26,11 @@ const loop = async () => {
             return
         }
 
-        const balance = await getBalance(round.roundAddress, round.assetAddress)
+        const balanceRaw = await getBalance(round.roundAddress, round.assetAddress)
+        
+        const decimals = +round.decimals || 18
+        const balance = ethers.formatUnits(balanceRaw, decimals);
+
         const amountPerUser = round.amount / round.topUserCount;
         const amountNeeded = usersLeftToReward * amountPerUser
 
@@ -36,7 +40,7 @@ const loop = async () => {
         }
 
         const usersInChannel = await getUsersInChannel(round.channel, round.topUserCount)
-        const userFidsToReward = usersInChannel.slice(round.rewardedUsersCount)
+        const userFidsToReward = usersInChannel
 
         const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
 

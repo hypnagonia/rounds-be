@@ -26,6 +26,7 @@ const saveRound = async (round) => {
         rewardedUsersCount = 0,
         roundAddress,
         roundId,
+        decimals,
     } = round;
 
     const lastUpdated = 0;
@@ -41,6 +42,7 @@ const saveRound = async (round) => {
         roundInterval,
         lastUpdated,
         rewardedUsersCount,
+        decimals
     };
 
     await roundsDb.put(roundAddress, newRound);

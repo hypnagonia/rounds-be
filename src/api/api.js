@@ -7,6 +7,7 @@ const log4js = require("log4js");
 const logger = log4js.getLogger();
 const httpLogger = log4js.getLogger('http');
 const { getUsersInChannel } = require('../client/openrankClient')
+const { getERC20Decimals } = require('../client/ethClient')
 const app = express();
 const { createRoundV1 } = require('../service/roundV1Service')
 const { isZeroAddress } = require('../utils')
@@ -63,13 +64,15 @@ app.post('/rounds', async (req, res) => {
 
     // todo check if sender is in the channel
 
+    let decimals = 18
     let assetType
     if (isZeroAddress(assetAddress)) {
         assetType = assetTypes.eth
     } else {
+        decimals = await getERC20Decimals(assetAddress)
         assetType = assetTypes.erc20
-    }
 
+    }
 
     if (!ethers.isAddress(assetAddress)) {
         res.status(400).json({ error: `${assetAddress} must be a valid ethereum 0x address` });
