@@ -1,7 +1,7 @@
 const {Level} = require('level');
 const path = require('path');
 
-const dbPath = path.join(__dirname, '..', 'db');
+const dbPath = path.join(__dirname, '..', '..', 'db');
 const roundsDb = new Level(path.join(dbPath, 'rounds'), { valueEncoding: 'json' });
 const rewardsDb = new Level(path.join(dbPath, 'rewards'), { valueEncoding: 'json' });
 
