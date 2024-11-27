@@ -36,7 +36,7 @@ async function getERC20Decimals(assetAddress) {
     }
 
     const contract = new ethers.Contract(assetAddress, erc20ABI, provider);
-    return await contract.decimals();
+    return (await Number(contract.decimals()))
 }
 
 async function getERC20Name(assetAddress) {

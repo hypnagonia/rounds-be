@@ -31,3 +31,4 @@ package-lock.json
 db/*.csv
 db/*
 db
+./db

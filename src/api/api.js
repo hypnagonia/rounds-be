@@ -99,10 +99,10 @@ app.post('/rounds', async (req, res) => {
     }
 
     try {
-        await saveRound({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId });
+        await saveRound({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals });
 
         logger.info(`New round created! 
-            ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId })}
+            ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals })}
             `)
 
         res.status(201).json({ message: 'Round created successfully', roundAddress });

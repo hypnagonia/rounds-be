@@ -12,6 +12,9 @@ const init = () => {
     loop()
 }
 
+// todo get rid
+const defaultDecimals = 6
+
 const loop = async () => {
     logger.info('Distributing reward')
     const rounds = await loadRounds();
@@ -24,7 +27,8 @@ const loop = async () => {
 
         const balanceRaw = await getBalance(round.roundAddress, round.assetAddress)
         
-        const decimals = +round.decimals || 18
+        const decimals = +round.decimals || defaultDecimals
+        
         const balance = ethers.formatUnits(balanceRaw, decimals);
 
         const amountPerUser = round.amount / round.topUserCount;
@@ -47,11 +51,15 @@ const loop = async () => {
             const roundAddress = round.roundAddress
             const assetAddress = round.assetAddress
 
-            const decimals = +round.decimals || 18
+            const decimals = +round.decimals || defaultDecimals
+            
             const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(decimals)
             const fid = usersDataWithValidAddresses[i].fid
-            logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, amount })
-            const txHash = await sendReward({ fid, roundAddress, recipientAddress, assetAddress, amount })
+            
+            const normalizedAmount = ethers.parseUnits(amount, decimals) + ''
+            console.log({amount, normalizedAmount})
+            logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, normalizedAmount })
+            const txHash = await sendReward({ fid, roundAddress, recipientAddress, assetAddress, normalizedAmount })
 
             await saveRoundRewardDetails(round, { fid, roundAddress, recipientAddress, assetAddress, amountSent: amount, txHash })
         }
@@ -67,7 +75,7 @@ const loop = async () => {
         const r = rounds[i]
 
         // todo remove
-        if (!+r.lastUpdated && r.roundInterval === '10m') {
+        if (!+r.lastUpdated) {
             try {
                 await processRound(r)
             } catch (e) {

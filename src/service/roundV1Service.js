@@ -28,6 +28,7 @@ const ROUND_ABI = [
     "function isFeeClaimed() external view returns (bool)",
     "function fee() external view returns (uint256)",
     "function award() external view returns (tuple(uint8 assetType, address token, uint256 identifier))",
+    // function award() public view returns (uint8 assetType, address token, uint256 identifier)
     "function claimMerkleRoot() external view returns (bytes32)",
     "function hasFIDClaimed(uint256 fid) public view returns (bool)",
     "function setAdmin(address newAdmin) external",
@@ -84,8 +85,7 @@ const createRoundV1 = async ({ assetType, assetAddress, roundId, amount }) => {
     }
 }
 
-// todo for erc20
-const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, amount }) => {
+const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, normalizedAmount }) => {
     try {
         const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
         const roundContract = new ethers.Contract(roundAddress, ROUND_ABI, wallet);
@@ -99,19 +99,21 @@ const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, a
             verifyingContract: roundAddress,
         };
 
-        amountNormalized = ethers.parseEther(amount);
-        
+        const amount = normalizedAmount
+        // amountNormalized = ethers.parseEther(amount);
+
         // todo proof?
         const proof = [] // ["0x0000000000000000000000000000000000000000000000000000000000000000"];
-
+        
         // todo sig?
         // Generate the digest for EIP-712 signing
+        
         const abiCoder = ethers.AbiCoder.defaultAbiCoder();
 
         const structHash = ethers.keccak256(
             abiCoder.encode(
                 ["bytes32", "uint256", "address", "uint256"],
-                [CLAIM_TYPEHASH, fid, recipientAddress, amountNormalized]
+                [CLAIM_TYPEHASH, fid, recipientAddress, 10n] // todo amount
             )
         );
 
@@ -124,16 +126,16 @@ const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, a
 
         const sig = await wallet.signMessage(ethers.getBytes(digest));
         logger.debug("Generated Signature:", sig);
-
-        const hasClaimed = await roundContract.hasFIDClaimed(fid);
         
+        const hasClaimed = await roundContract.hasFIDClaimed(fid);
+
         if (hasClaimed) {
             return
         }
 
         // Call the claim function with the generated signature
-        logger.info(`Claiming for FID: ${fid}, Recipient: ${recipientAddress}, Amount: ${amount} ETH`);
-        const tx = await roundContract.claim(fid, recipientAddress, amountNormalized, proof, sig);
+        logger.info(`Claiming for FID: ${fid}, Recipient: ${recipientAddress}, Amount: ${amount} normalizedAmount ${normalizedAmount}`);
+        const tx = await roundContract.claim(fid, recipientAddress, normalizedAmount, proof, sig);
 
         logger.info(`Transaction sent: ${tx.hash}`);
 
@@ -146,7 +148,30 @@ const sendReward = async ({ fid, roundAddress, recipientAddress, assetAddress, a
     }
 }
 
+const getAward = async (roundAddress) => {
+    try {
+        const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+        const roundContract = new ethers.Contract(roundAddress, ROUND_ABI, wallet);
+        const award = await roundContract.award();
+
+        const assetType = award.assetType; // Enum value (0 = NONE, 1 = ETH, etc.)
+        const tokenAddress = award.token; // Token address (or zero address for ETH)
+        const identifier = award.identifier; // Token ID or 0 for fungible assets
+
+        const assetTypes = ["NONE", "ETH", "ERC20", "ERC721", "ERC1155"];
+        const assetTypeName = assetTypes[assetType] || "UNKNOWN";
+
+        console.log("Award Struct:");
+        console.log(`  Asset Type: ${assetTypeName} (${assetType})`);
+        console.log(`  Token Address: ${tokenAddress}`);
+        console.log(`  Identifier: ${identifier}`);
+    } catch (error) {
+        console.error("Error fetching the award value:", error);
+    }
+}
+
 module.exports = {
     createRoundV1,
-    sendReward
+    sendReward,
+    getAward
 }
