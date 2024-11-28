@@ -1,6 +1,6 @@
 const axios = require('axios');
 const log4js = require("log4js");
-const logger = log4js.getLogger();
+const logger = log4js.getLogger("client");
 
 const OPENRANK_HOST = `https://graph.cast.k3l.io`;
 

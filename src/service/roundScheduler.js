@@ -39,9 +39,10 @@ const loop = async () => {
             return
         }
 
-        const usersInChannel = await getUsersInChannel(round.channel, round.topUserCount)
+        const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount)
         const userFidsToReward = usersInChannel
 
+        logger.info("users in channel", userFidsToReward)
         // const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
         const usersData = await getAddressesByFidsNeyar(userFidsToReward.map(e => e.fid))
         logger.info("users to reward", usersData)
