@@ -50,9 +50,10 @@ app.post('/rounds', async (req, res) => {
     // date range for recurring rounds
 
     if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount) {
-        return res.status(400).json({ error: `All fields are required { amount, assetAddress, channelId, roundInterval, topUserCount }
+        return res.status(400).json({
+            error: `All fields are required { amount, assetAddress, channelId, roundInterval, topUserCount }
             ${JSON.stringify({ amount, assetAddress, channelId, roundInterval, topUserCount })}`
-         });
+        });
     }
 
     const usersInChannel = await getUsersInChannel(channelId)
@@ -91,7 +92,7 @@ app.post('/rounds', async (req, res) => {
     catch (e) {
         logger.error('Error during creating round', e);
         res.status(500).json({ error: 'Error during creating round ' + e });
-        return 
+        return
     }
 
     if (!ethers.isAddress(roundAddress)) {
@@ -99,7 +100,8 @@ app.post('/rounds', async (req, res) => {
     }
 
     try {
-        await saveRound({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals });
+        const newRound = { type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals }
+        await saveRound(newRound);
 
         logger.info(`New round created! 
             ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals })}
@@ -142,7 +144,7 @@ app.get('/rounds/channel/:channelId', async (req, res) => {
     const pageSize = parseInt(limit, 10);
 
     try {
-        const allRounds = await loadRounds(); 
+        const allRounds = await loadRounds();
         const filteredRounds = allRounds.filter(round => round.channelId === channelId);
 
 
@@ -175,7 +177,7 @@ app.get('/rounds/:roundAddress/rewards', async (req, res) => {
     }
 
     try {
-        const allRounds = await loadRoundReward(roundAddress); 
+        const allRounds = await loadRoundReward(roundAddress);
 
         const startIndex = (pageNumber - 1) * pageSize;
         const endIndex = startIndex + pageSize;

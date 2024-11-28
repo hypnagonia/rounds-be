@@ -1,7 +1,7 @@
 const { loadRounds, saveRound, updateRound, saveRoundRewardDetails } = require('../db/db');
 const { getBalance } = require('../client/ethClient')
 const { sendReward } = require('./roundV1Service')
-const { getUsersInChannel, getAddressByFids } = require('../client/openrankClient')
+const { getUsersInChannel, getAddressByFids, getAddressesByFidsNeyar } = require('../client/openrankClient')
 const log4js = require("log4js");
 const logger = log4js.getLogger('scheduler');
 const { ethers } = require("ethers");
@@ -42,7 +42,9 @@ const loop = async () => {
         const usersInChannel = await getUsersInChannel(round.channel, round.topUserCount)
         const userFidsToReward = usersInChannel
 
-        const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
+        // const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
+        const usersData = await getAddressesByFidsNeyar(userFidsToReward.map(e => e.fid))
+        logger.info("users to reward", usersData)
 
         const usersDataWithValidAddresses = usersData.filter(a => ethers.isAddress(a.address))
 
