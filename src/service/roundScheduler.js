@@ -26,9 +26,9 @@ const loop = async () => {
         }
 
         const balanceRaw = await getBalance(round.roundAddress, round.assetAddress)
-        
+
         const decimals = +round.decimals || defaultDecimals
-        
+
         const balance = ethers.formatUnits(balanceRaw, decimals);
 
         const amountPerUser = round.amount / round.topUserCount;
@@ -36,7 +36,7 @@ const loop = async () => {
 
         if (balance < amountPerUser) {
             logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channelId} channel`)
-            return
+            // return
         }
 
         const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount)
@@ -55,12 +55,12 @@ const loop = async () => {
             const assetAddress = round.assetAddress
 
             const decimals = +round.decimals || defaultDecimals
-            
+
             const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(decimals)
             const fid = usersDataWithValidAddresses[i].fid
-            
+
             const normalizedAmount = ethers.parseUnits(amount, decimals) + ''
-            console.log({amount, normalizedAmount})
+            console.log({ amount, normalizedAmount })
             logger.info('Sending reward', { fid, roundAddress, recipientAddress, assetAddress, normalizedAmount })
             const txHash = await sendReward({ fid, roundAddress, recipientAddress, assetAddress, normalizedAmount })
 

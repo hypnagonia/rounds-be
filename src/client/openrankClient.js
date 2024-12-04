@@ -4,11 +4,34 @@ const logger = log4js.getLogger("client");
 
 const OPENRANK_HOST = `https://graph.cast.k3l.io`;
 
-const getUsersInChannel = async (channelName, limit = 0) => {
+
+//https://graph.cast.k3l.io/channels/points/founders2?offset=0&limit=100&lite=true'
+const getUsersInChannelByPoints = async (channelName, limit = 0) => {
     const limitUrl = limit ? `limit=${limit}` : ''
-    const url = `${OPENRANK_HOST}/channels/rankings/${channelName}?rank_timeframe=7d&${limitUrl}`
+    const url = `${OPENRANK_HOST}/channels/points/${channelName}?rank_timeframe=60d&${limitUrl}`
     const response = await axios.get(url);
     const usersInChannel = response.data.result
+
+    return usersInChannel
+}
+
+//https://graph.cast.k3l.io/channels/rankings/founders?rank_timeframe=7d&limit=5
+const getUsersInChannelByRankings = async (channelName, limit = 0) => {
+    const limitUrl = limit ? `limit=${limit}` : ''
+    const url = `${OPENRANK_HOST}/channels/rankings/${channelName}?rank_timeframe=60d&${limitUrl}`
+    const response = await axios.get(url);
+    const usersInChannel = response.data.result
+
+    return usersInChannel
+}
+
+//https://graph.cast.k3l.io/channels/rankings/founders?rank_timeframe=7d&limit=5
+const getUsersInChannel = async (channelName, limit = 0) => {
+    let usersInChannel = await getUsersInChannelByPoints(channelName, limit)
+
+    if (usersInChannel.length === 0) {
+        usersInChannel = await getUsersInChannelByRankings(channelName, limit)
+    }
 
     return usersInChannel
 }
