@@ -12,7 +12,6 @@ const init = () => {
     loop()
 }
 
-// todo get rid
 const defaultDecimals = 6
 
 const loop = async () => {
@@ -36,7 +35,7 @@ const loop = async () => {
 
         if (balance < amountPerUser) {
             logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channelId} channel`)
-            // return
+            return
         }
 
         const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount)

@@ -63,12 +63,10 @@ const updateRound = async (roundAddress, updatedFields) => {
 
 const loadRoundReward = async (roundAddress) => {
     try {
-        // Fetch the array of rewards for the roundAddress
         const rewards = await rewardsDb.get(roundAddress);
         return rewards;
     } catch (error) {
         if (error.notFound) {
-            // Return an empty array if no rewards exist for the roundAddress
             return [];
         }
         throw error;
