@@ -28,7 +28,8 @@ const getUsersInChannelByRankings = async (channelName, limit = 0) => {
 
 //https://graph.cast.k3l.io/channels/rankings/founders?rank_timeframe=7d&limit=5
 const getUsersInChannel = async (channelName, limit = 0, orderUsersBy = 'total_points') => {
-    let usersInChannel
+    let usersInChannel = []
+    
     if (orderUsersBy === 'total_points' || orderUsersBy === 'daily_points') {
         usersInChannel = await getUsersInChannelByPoints(channelName, limit, orderUsersBy)
     }

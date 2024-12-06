@@ -40,7 +40,7 @@ const loop = async () => {
             return
         }
 
-        const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount, round.orderUsersBy)
+        const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount + round.excludedUsersFID.length, round.orderUsersBy)
         const userFidsToReward = usersInChannel
 
         logger.info("users in channel", userFidsToReward)
@@ -63,7 +63,8 @@ const loop = async () => {
 
             const decimals = +round.decimals || defaultDecimals
 
-            const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(decimals)
+            // it maybe less users than channel has but portions will be equal
+            const amount = amountPerUser + '' //(round.amount / usersDataWithValidAddresses.length).toFixed(decimals)
 
             const normalizedAmount = ethers.parseUnits(amount, decimals) + ''
             console.log({ amount, normalizedAmount })
