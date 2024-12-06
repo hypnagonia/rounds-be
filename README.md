@@ -49,6 +49,17 @@ curl -X POST https://reward-backend.k3l.io/rounds \
   "eligibleUsersCount": 10
 }'
 
+curl -X POST http://localhost:3009/rounds \
+-H "Content-Type: application/json" \
+-d '{
+  "tokenAmount": "0.0001",
+  "tokenAddress": "0x0000000000000000000000000000000000000000",
+  "channelId": "founders",
+  "frequencyDays": "10m",
+  "eligibleUsersCount": 4,
+  "orderUsersBy": "total_points",
+  "excludedUsersFID": [3]
+}'
 
 https://reward-backend.k3l.io/rounds?page=1&limit=5
 

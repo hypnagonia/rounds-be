@@ -5,7 +5,6 @@ const dbPath = path.join(__dirname, '..', '..', 'db');
 const roundsDb = new Level(path.join(dbPath, 'rounds'), { valueEncoding: 'json' });
 const rewardsDb = new Level(path.join(dbPath, 'rewards'), { valueEncoding: 'json' });
 
-// todo pagination
 const loadRounds = async () => {
     const rounds = [];
     for await (const [key, value] of roundsDb.iterator()) {
@@ -15,37 +14,7 @@ const loadRounds = async () => {
 };
 
 const saveRound = async (round) => {
-    const {
-        type,
-        amount,
-        assetAddress,
-        channelId,
-        roundInterval,
-        topUserCount,
-        createdAt,
-        rewardedUsersCount = 0,
-        roundAddress,
-        roundId,
-        decimals,
-    } = round;
-
-    const lastUpdated = 0;
-    const newRound = {
-        roundId,
-        topUserCount,
-        type,
-        amount,
-        assetAddress,
-        channelId,
-        roundAddress,
-        createdAt,
-        roundInterval,
-        lastUpdated,
-        rewardedUsersCount,
-        decimals
-    };
-
-    await roundsDb.put(roundAddress, newRound);
+    await roundsDb.put(round.roundAddress, {...round, lastUpdated: 0});
 };
 
 const updateRound = async (roundAddress, updatedFields) => {

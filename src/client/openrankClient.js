@@ -6,9 +6,10 @@ const OPENRANK_HOST = `https://graph.cast.k3l.io`;
 
 
 //https://graph.cast.k3l.io/channels/points/founders2?offset=0&limit=100&lite=true'
-const getUsersInChannelByPoints = async (channelName, limit = 0) => {
+const getUsersInChannelByPoints = async (channelName, limit = 0, orderUsersBy) => {
     const limitUrl = limit ? `limit=${limit}` : ''
-    const url = `${OPENRANK_HOST}/channels/points/${channelName}?rank_timeframe=60d&${limitUrl}`
+    const orderBy = `orderby=${orderUsersBy}`
+    const url = `${OPENRANK_HOST}/channels/points/${channelName}?rank_timeframe=60d&${orderBy}&${limitUrl}`
     const response = await axios.get(url);
     const usersInChannel = response.data.result
 
@@ -26,9 +27,11 @@ const getUsersInChannelByRankings = async (channelName, limit = 0) => {
 }
 
 //https://graph.cast.k3l.io/channels/rankings/founders?rank_timeframe=7d&limit=5
-const getUsersInChannel = async (channelName, limit = 0) => {
-    let usersInChannel = await getUsersInChannelByPoints(channelName, limit)
-
+const getUsersInChannel = async (channelName, limit = 0, orderUsersBy = 'total_points') => {
+    let usersInChannel
+    if (orderUsersBy === 'total_points' || orderUsersBy === 'daily_points') {
+        usersInChannel = await getUsersInChannelByPoints(channelName, limit, orderUsersBy)
+    }
     if (usersInChannel.length === 0) {
         usersInChannel = await getUsersInChannelByRankings(channelName, limit)
     }

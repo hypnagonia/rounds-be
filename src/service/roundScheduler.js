@@ -33,12 +33,14 @@ const loop = async () => {
         const amountPerUser = round.amount / round.topUserCount;
         const amountNeeded = usersLeftToReward * amountPerUser
 
+
+        console.log({ round })
         if (balance < amountPerUser) {
             logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channelId} channel`)
             return
         }
 
-        const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount)
+        const usersInChannel = await getUsersInChannel(round.channelId, round.topUserCount, round.orderUsersBy)
         const userFidsToReward = usersInChannel
 
         logger.info("users in channel", userFidsToReward)
@@ -49,6 +51,12 @@ const loop = async () => {
         const usersDataWithValidAddresses = usersData.filter(a => ethers.isAddress(a.address))
 
         for (let i = 0; i < usersDataWithValidAddresses.length; i++) {
+            const fid = usersDataWithValidAddresses[i].fid
+
+            if (round.excludedUsersFID.includes(fid)) {
+                continue
+            }
+
             const recipientAddress = usersDataWithValidAddresses[i].address
             const roundAddress = round.roundAddress
             const assetAddress = round.assetAddress
@@ -56,7 +64,6 @@ const loop = async () => {
             const decimals = +round.decimals || defaultDecimals
 
             const amount = (round.amount / usersDataWithValidAddresses.length).toFixed(decimals)
-            const fid = usersDataWithValidAddresses[i].fid
 
             const normalizedAmount = ethers.parseUnits(amount, decimals) + ''
             console.log({ amount, normalizedAmount })

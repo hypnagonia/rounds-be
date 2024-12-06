@@ -40,7 +40,7 @@ tokenAmount: 100
 */
 
 app.post('/rounds', async (req, res) => {
-    const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount, dateRange } = req.body;
+    const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount, dateRange, orderUsersBy, excludedUsersFID = [] } = req.body;
     const amount = tokenAmount
     const topUserCount = eligibleUsersCount
     const roundInterval = frequencyDays
@@ -49,10 +49,10 @@ app.post('/rounds', async (req, res) => {
     // dateRange: Object { from: "2024-11-22T12:38:55.347Z", to: "2024-12-12T12:38:55.347Z" }
     // date range for recurring rounds
 
-    if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount) {
+    if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount || !orderUsersBy) {
         return res.status(400).json({
-            error: `All fields are required { amount, assetAddress, channelId, roundInterval, topUserCount }
-            ${JSON.stringify({ amount, assetAddress, channelId, roundInterval, topUserCount })}`
+            error: `All fields are required 
+            ${JSON.stringify({ amount, assetAddress, channelId, roundInterval, topUserCount, orderUsersBy })}`
         });
     }
 
@@ -100,11 +100,11 @@ app.post('/rounds', async (req, res) => {
     }
 
     try {
-        const newRound = { type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals }
+        const newRound = { type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals, orderUsersBy, excludedUsersFID }
         await saveRound(newRound);
 
         logger.info(`New round created! 
-            ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals })}
+            ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals, orderUsersBy, excludedUsersFID })}
             `)
 
         res.status(201).json({ message: 'Round created successfully', roundAddress });
