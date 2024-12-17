@@ -74,6 +74,7 @@ const createRoundV1 = async ({ assetType, assetAddress, roundId, amount }) => {
         const receipt = await tx.wait();
         logger.info("Transaction confirmed:", { receipt });
 
+        console.log({logs: receipt})
         const newRoundAddress = receipt.logs[0].address;
         logger.info("New Round V1 deployed at address:", newRoundAddress);
 

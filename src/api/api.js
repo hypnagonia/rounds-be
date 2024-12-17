@@ -40,7 +40,17 @@ tokenAmount: 100
 */
 
 app.post('/rounds', async (req, res) => {
-    const { tokenAmount, tokenAddress, channelId, frequencyDays, eligibleUsersCount, dateRange, orderUsersBy, excludedUsersFID = [] } = req.body;
+    const {
+        tokenAmount,
+        tokenAddress,
+        channelId,
+        frequencyDays,
+        eligibleUsersCount,
+        dateRange,
+        orderUsersBy,
+        stpContract,
+        excludedUsersFID = []
+    } = req.body;
     const amount = tokenAmount
     const topUserCount = eligibleUsersCount
     const roundInterval = frequencyDays
@@ -100,11 +110,20 @@ app.post('/rounds', async (req, res) => {
     }
 
     try {
-        const newRound = { type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals, orderUsersBy, excludedUsersFID }
+        const newRound = {
+            type, amount, assetAddress, channelId, roundInterval, createdAt,
+            topUserCount, roundAddress, roundId, decimals, orderUsersBy,
+            excludedUsersFID,
+            stpContract
+        }
         await saveRound(newRound);
 
         logger.info(`New round created! 
-            ${JSON.stringify({ type, amount, assetAddress, channelId, roundInterval, createdAt, topUserCount, roundAddress, roundId, decimals, orderUsersBy, excludedUsersFID })}
+            ${JSON.stringify({
+            type, amount, assetAddress, channelId, roundInterval, createdAt,
+            topUserCount, roundAddress, roundId, decimals, orderUsersBy, excludedUsersFID,
+            stpContract
+        })}
             `)
 
         res.status(201).json({ message: 'Round created successfully', roundAddress });

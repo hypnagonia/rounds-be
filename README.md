@@ -84,4 +84,18 @@ get address by fid
 https://docs.neynar.com/reference/fetch-bulk-users
 
 
+curl -X POST http://localhost:3009/rounds \
+-H "Content-Type: application/json" \
+-d '{
+  "tokenAmount": "0.0001",
+  "tokenAddress": "0x0000000000000000000000000000000000000000",
+  "stpContract": "0x1cff5c9fb2a5fba6951d148c5d46d1272a2763ee",
+  "channelId": "memes",
+  "frequencyDays": "10m",
+  "eligibleUsersCount": 10,
+  "orderUsersBy": "total_points",
+  "excludedUsersFID": [3]
+}'
 
+
+stpContract
