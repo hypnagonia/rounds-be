@@ -14,7 +14,6 @@ const getUsersWithSubscriptionsInChannel = async (channelName, limit = 0, orderU
         const addresses = []
         const maxAddressesInQuery = 100
         let fids = []
-      
         for (let i = 0; i < users.length; i++) {
           const fid = users[i].fid
 
@@ -22,19 +21,31 @@ const getUsersWithSubscriptionsInChannel = async (channelName, limit = 0, orderU
       
           if (fids.length % maxAddressesInQuery === 0) {
             const fidsAndAddresses = await getAddressesByFidsNeyar(fids)
-            addresses.push(...fidsAndAddresses)
+
+            const newUsers = fidsAndAddresses.map(e => {
+                const openrank = users.find(u => u.fid === e.fid) || {}
+                return {...e,...openrank}
+            })
+
+            addresses.push(...newUsers)
             const res = await getSubscriptionsNeynar(fidsAndAddresses.map(a => a.address), STPContractAddress)
             fids = []
             subscriptions = { ...subscriptions, ...res }
           }
         }
-        
+
+        // todo rename addresses to users, remove doublicating code
         const fidsAndAddresses = await getAddressesByFidsNeyar(fids)
-        addresses.push(...fidsAndAddresses)
+        const newUsers = fidsAndAddresses.map(e => {
+            const openrank = users.find(u => u.fid === e.fid) || {}
+            return {...e,...openrank}
+        })
+        addresses.push(...newUsers)
         const res = await getSubscriptionsNeynar(fidsAndAddresses.map(a => a.address), STPContractAddress)
 
         subscriptions = { ...subscriptions, ...res }
-      
+        
+        // console.log({addresses})
         return {subscriptions, addresses}
       }
 
@@ -54,6 +65,8 @@ const getUsersWithSubscriptionsInChannel = async (channelName, limit = 0, orderU
             const addressLowercase = address.toLowerCase()
       
             const isSubscribed = subscriptions[addressLowercase] ? subscriptions[addressLowercase].status : false
+
+
             return { ...user, isSubscribed }
           })
           .filter(r => !!r)
@@ -62,12 +75,11 @@ const getUsersWithSubscriptionsInChannel = async (channelName, limit = 0, orderU
         return usersWithSubscriptions
       }
 
-
       const users = await getUsersInChannel(channelName, 500, orderUsersBy)
       const usersWithSubscriptions = await addSubcriptionDataToUsers(users, stpContractAddress)
-      // todo
+      // todo may need to be sorted anew?
+      
       usersWithSubscriptions.length = limit
-
       return usersWithSubscriptions
 }
 

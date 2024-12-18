@@ -20,7 +20,8 @@ const loop = async () => {
 
     const processRound = async (round) => {
         round.excludedUsersFID = round.excludedUsersFID || []
-        const usersLeftToReward = round.topUserCount - round.rewardedUsersCount
+        
+        const usersLeftToReward = round.topUserCount 
         if (usersLeftToReward <= 0) {
             return
         }
@@ -34,12 +35,14 @@ const loop = async () => {
         const amountPerUser = round.amount / round.topUserCount;
 
         const fee = (+process.env.FEE_PERCENT || 2) / 100
+        
         const amountNeeded = usersLeftToReward * amountPerUser * fee
+        console.log({fee, amountNeeded, usersLeftToReward, amountPerUser})
 
-        console.log({ round })
+        // console.log({ round })
         if (balance < amountPerUser) {
             logger.warn(`${round.roundAddress} holds ${balance} of ${round.assetAddress} token. ${amountNeeded} tokens needed to reward ${round.topUserCount} top users in ${round.channelId} channel`)
-            // return
+            return
         }
 
         let usersInChannel = []
@@ -62,17 +65,15 @@ const loop = async () => {
         const userFidsToReward = usersInChannel
 
         logger.info("users in channel", userFidsToReward)
-        // const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
-
+        
         if (!round.stpContract) {
+            // const usersData = await getAddressByFids(userFidsToReward.map(e => e.fid))
             usersData = await getAddressesByFidsNeyar(userFidsToReward.map(e => e.fid))
         } else {
             usersData = usersInChannel
         }
 
         logger.info("users to reward", usersData)
-
-        return
 
         const usersDataWithValidAddresses = usersData.filter(a => ethers.isAddress(a.address))
 
