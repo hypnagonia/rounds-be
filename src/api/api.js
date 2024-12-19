@@ -64,6 +64,8 @@ app.post('/rounds', async (req, res) => {
     /**  verification logic
     
     try {
+        // todo check message.timestamp
+        
         const address = ethers.verifyMessage(message, signature);
         const userInfo = await getUsersInfoByAddresses([address])
         const channelInfo = await fetchChannelInfo(channelId)
@@ -76,7 +78,7 @@ app.post('/rounds', async (req, res) => {
         return
     }
     */
-   
+
     if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount || !orderUsersBy) {
         return res.status(400).json({
             error: `All fields are required 
