@@ -60,12 +60,10 @@ app.post('/rounds', async (req, res) => {
     const topUserCount = eligibleUsersCount
     const roundInterval = frequencyDays
     const assetAddress = tokenAddress
-
-    /**  verification logic
     
     try {
         // todo check message.timestamp
-        
+
         const address = ethers.verifyMessage(message, signature);
         const userInfo = await getUsersInfoByAddresses([address])
         const channelInfo = await fetchChannelInfo(channelId)
@@ -77,7 +75,6 @@ app.post('/rounds', async (req, res) => {
         res.status(403)
         return
     }
-    */
 
     if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount || !orderUsersBy) {
         return res.status(400).json({
