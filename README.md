@@ -98,4 +98,8 @@ curl -X POST http://localhost:3009/rounds \
 }'
 
 
-stpContract
+curl -X POST http://localhost:3009/rounds \
+-H "Content-Type: application/json" \
+-d '
+{"message":"{\"stpContract\":\"\",\"tokenAddress\":\"0x0000000000000000000000000000000000000000\",\"tokenAmount\":\"1\",\"recipientPercentage\":1,\"distributionType\":\"one-time\",\"frequencyDays\":\"0\",\"dateRange\":{\"from\":\"2024-12-18T18:50:53.791Z\",\"to\":\"2025-01-07T18:50:53.791Z\"},\"channelId\":\"cryptosapiens\",\"eligibleUsersCount\":1,\"excludedUsersFID\":[],\"orderUsersBy\":\"total_points\",\"signature\":\"\",\"timestamp\":1734547859516}","signature":"0xb8e4dcbada59940253a8ae52c04e4c1fe3a39a43b9af02464df33a8a41ee46d72be28c9a6cd88cae9fcbeeaf410428fa4011245c6ce8239f9d3b6f1f773430cc1c"}
+'

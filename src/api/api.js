@@ -6,7 +6,7 @@ const { ethers } = require("ethers");
 const log4js = require("log4js");
 const logger = log4js.getLogger();
 const httpLogger = log4js.getLogger('http');
-const { getUsersInChannel } = require('../client/openrankClient')
+const { getUsersInChannel, getUsersInfoByAddresses } = require('../client/openrankClient')
 const { getERC20Decimals } = require('../client/ethClient')
 const app = express();
 const { createRoundV1 } = require('../service/roundV1Service')
@@ -14,6 +14,7 @@ const { isZeroAddress } = require('../utils')
 const { logFilename } = require('../constants')
 const path = require('path');
 const fs = require('fs');
+const { fetchChannelInfo } = require('../client/wrapcast');
 
 app.use(express.json());
 app.use(morgan('dev'));
@@ -40,6 +41,9 @@ tokenAmount: 100
 */
 
 app.post('/rounds', async (req, res) => {
+    const { message, signature } = req.body
+
+    console.log({ message })
     const {
         tokenAmount,
         tokenAddress,
@@ -49,16 +53,30 @@ app.post('/rounds', async (req, res) => {
         dateRange,
         orderUsersBy,
         stpContract,
-        excludedUsersFID = []
-    } = req.body;
+        excludedUsersFID = [],
+    } = JSON.parse(message);
+
     const amount = tokenAmount
     const topUserCount = eligibleUsersCount
     const roundInterval = frequencyDays
     const assetAddress = tokenAddress
 
-    // dateRange: Object { from: "2024-11-22T12:38:55.347Z", to: "2024-12-12T12:38:55.347Z" }
-    // date range for recurring rounds
-
+    /**  verification logic
+    
+    try {
+        const address = ethers.verifyMessage(message, signature);
+        const userInfo = await getUsersInfoByAddresses([address])
+        const channelInfo = await fetchChannelInfo(channelId)
+        if (!channelInfo.moderatorFids.includes(userInfo.fid)) {
+            res.status(403)
+            return    
+        }
+    } catch (e) {
+        res.status(403)
+        return
+    }
+    */
+   
     if (!amount || !assetAddress || !channelId || !roundInterval || !topUserCount || !orderUsersBy) {
         return res.status(400).json({
             error: `All fields are required 
