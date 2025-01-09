@@ -65,9 +65,10 @@ app.post('/rounds', async (req, res) => {
         // todo check message.timestamp
 
         const address = ethers.verifyMessage(message, signature);
-        const userInfo = await getUsersInfoByAddresses([address])
+        const usersInfo = await getUsersInfoByAddresses([address])
+        const userInfo = usersInfo[0] 
         const channelInfo = await fetchChannelInfo(channelId)
-        if (!channelInfo.moderatorFids.includes(userInfo.fid)) {
+        if (!userInfo || !channelInfo.moderatorFids.includes(userInfo.fid)) {
             res.status(403)
             return    
         }
